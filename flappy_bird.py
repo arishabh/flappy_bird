@@ -13,10 +13,17 @@ class Bird:
         self.x = x
         self.y = int(y)
         self.vel = 0
-        self.size = 10
+        self.size = 40
+        self.img = pygame.transform.scale(pygame.image.load('bird.png'), (50,37))
         
     def draw(self, screen):
-        pygame.draw.circle(screen, yellow, (self.x, self.y), self.size)
+        img = self.img
+        if self.vel < -1:
+            img = pygame.transform.rotate(self.img, 45)
+        elif self.vel > 1:
+            img = pygame.transform.rotate(self.img, -45)
+        center = img.get_rect(center=self.img.get_rect(topleft = (self.x, self.y)).center)
+        screen.blit(img, center)
 
     def tick(self):
         self.vel += self.acc
@@ -27,29 +34,33 @@ class Bird:
 
 class Pipe:
     def __init__(self, y=768, rand=768):
-        self.x = 600
+        self.x = 576
         self.width = 85
-        self.height = random.randint(0, rand)
-        self.y = y
+        self.height = random.randint(120, rand)
+        self.y = self.height-y
+        self.img = pygame.transform.scale(pygame.image.load('pipe.png'), (93, 527))
 
     def draw(self, screen):
-        pygame.draw.rect(screen, green, (self.x, self.y, self.width, self.height))
+        img = self.img
+        if(self.y >= 0):
+            img = pygame.transform.flip(self.img, True, True)
+        screen.blit(img, (self.x, self.y))
 
     def tick(self):
         self.x -= 5
 
     def collided(self, b):
         if(b.x+b.size>self.x and b.x-b.size<self.x+self.width):
-            if(self.y != 0  and b.y+b.size > self.y):
+            if(self.y > 0  and b.y+b.size > self.y):
                 return True
-            if(self.y == 0 and b.y-b.size<self.y+self.height):
+            if(self.y <= 0 and b.y-b.size<self.y+self.height):
                 return True
 
 class PipePair:
-    dist = 85
+    dist = 100
     min_len = 100
     def __init__(self):
-        self.top_pipe = Pipe(y=0, rand=(768-(self.dist+self.min_len)))
+        self.top_pipe = Pipe(y=527, rand=(768-(self.dist+self.min_len)))
         self.bot_pipe = Pipe()
         self.bot_pipe.height = 768-(self.top_pipe.height+self.dist)
         self.bot_pipe.y = 768-self.bot_pipe.height
@@ -69,7 +80,7 @@ pygame.init()
 
 quit = False
 dead = False
-size = [600, 768]
+size = [576, 768]
 
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Flappy Bird")
@@ -81,6 +92,7 @@ score = 0
 highscore = 0
 pipes = []
 dead_pipes = []
+back = pygame.transform.scale2x(pygame.image.load('back.png'))
 
 def show_score(score, hightscore):
     font = pygame.font.Font('dpcomic.ttf', 50)
@@ -122,7 +134,7 @@ while not quit:
 
     if dead: continue
     bird.tick()
-    screen.fill(back)
+    screen.blit(back, (0,0))
     for pipe in pipes: 
         pipe.tick()
         pipe.draw(screen)
