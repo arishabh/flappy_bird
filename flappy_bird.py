@@ -32,17 +32,20 @@ class Bird:
     def jump(self):
         self.vel = -10
 
+    def get_mask(self):
+        return pygame.mask.from_surface(self.img)
+
 class Pipe:
     def __init__(self, y=768, rand=768):
         self.x = 576
         self.width = 85
-        self.height = random.randint(120, rand)
+        self.height = min(random.randint(140, rand), 527)
         self.y = self.height-y
         self.img = pygame.transform.scale(pygame.image.load('pipe.png'), (93, 527))
 
     def draw(self, screen):
         img = self.img
-        if(self.y >= 0):
+        if(self.y > 0):
             img = pygame.transform.flip(self.img, True, True)
         screen.blit(img, (self.x, self.y))
 
@@ -50,17 +53,25 @@ class Pipe:
         self.x -= 5
 
     def collided(self, b):
-        if(b.x+b.size>self.x and b.x-b.size<self.x+self.width):
-            if(self.y > 0  and b.y+b.size > self.y):
-                return True
-            if(self.y <= 0 and b.y-b.size<self.y+self.height):
-                return True
+        # if(b.x+b.size>self.x and b.x-b.size<self.x+self.width):
+        #     if(self.y > 0  and b.y+b.size > self.y):
+        #         return True
+        #     if(self.y <= 0 and b.y-b.size<self.y+self.height):
+        #         return True
+        bird_mask = b.get_mask()
+        pipe_mask = pygame.mask.from_surface(self.img)
+        
+        offset = (self.x - b.x, self.y-b.y)
+        point = bird_mask.overlap(pipe_mask, offset)
+
+        return point != None
+        
 
 class PipePair:
     dist = 100
     min_len = 100
     def __init__(self):
-        self.top_pipe = Pipe(y=527, rand=(768-(self.dist+self.min_len)))
+        self.top_pipe = Pipe(y=527, rand=(768-(self.min_len+self.dist)))
         self.bot_pipe = Pipe()
         self.bot_pipe.height = 768-(self.top_pipe.height+self.dist)
         self.bot_pipe.y = 768-self.bot_pipe.height
